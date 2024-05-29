@@ -20,39 +20,55 @@ lasso <- function(beta, rho, V,u) {
   return(beta)
 }
 
-GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000) {
+GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
   p <- ncol(S)
-  W = S + rho*diag(1,p,p)
+  W = S + rho*diag(1,p,p)*penalize_diag
   Theta = matrix(NA, p,p)
   stop = FALSE
+  for (i in 1:p) {  
+    beta <- solve(W[-i,-i])%*%W[-i,i] # W11^-1 * W12
+    Theta[i,i] <- 1/(W[i,i] - W[-i,i]%*%beta) # 1/(W22-W12*Beta)
+    Theta[-i,i] <- -Theta[i,i]*beta #Theta12 = -Theta22*Beta
+    Theta[i,-i] <- -Theta[i,i]*beta #Theta21 = -Theta22*Beta
+  }
   for (iter in 1:max_iter) {
+    W_lag <- W
     for (i in 1:p) {  
-      beta <- solve(W[-i,-i],diag(1,p-1,p-1))%*%W[-i,i] # W11^-1 * W12
+      beta <- solve(W[-i,-i])%*%W[-i,i] # W11^-1 * W12
       beta <- lasso(beta, rho, W[-i,-i], S[-i,i])
-      W_lag <- W
       W[-i,i] <- W[-i,-i]%*%beta #W12 = W11*Beta
       W[i,-i] <- W[-i,-i]%*%beta #W21 = W11*Beta
       Theta[i,i] <- 1/(W[i,i] - W[-i,i]%*%beta) # 1/(W22-W12*Beta)
       Theta[-i,i] <- -Theta[i,i]*beta #Theta12 = -Theta22*Beta
       Theta[i,-i] <- -Theta[i,i]*beta #Theta21 = -Theta22*Beta
-      if (mean((abs(W-W_lag))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) {
-        stop = TRUE
-        print("Break")
-        print(iter)
-        break
-      }
-    } 
-    if (stop) {
+    }
+    if (mean((abs(W-W_lag))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) {
+      print("Break")
+      print(iter)
       break
     }
   }
+  
   return(list(Theta, W))
 }
 
 
-X<- GLASSO_(S)
+X<- GLASSO_(S, rho=1.2, penalize_diag = FALSE)
 mdl <- glasso(S,rho=1.2,approx=FALSE, penalize.diagonal = FALSE)
 # Estimated inverse covariance matrix
 X[1]
 mdl$wi
+# Estimated covariance matrix
+X[2]
+mdl$w
+
+X<- GLASSO_(S, rho=1.2, penalize_diag = TRUE)
+mdl <- glasso(S,rho=1.2,approx=FALSE, penalize.diagonal = TRUE)
+# Estimated inverse covariance matrix
+X[1]
+mdl$wi
+# Estimated covariance matrix
+X[2]
+mdl$w
+
 
