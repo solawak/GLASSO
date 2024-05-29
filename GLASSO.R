@@ -30,8 +30,6 @@ GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000) {
       beta <- solve(W[-i,-i],diag(1,p-1,p-1))%*%W[-i,i] # W11^-1 * W12
       beta <- lasso(beta, rho, W[-i,-i], S[-i,i])
       W_lag <- W
-      betas[1:p-1,i] <- beta
-      print(betas)
       W[-i,i] <- W[-i,-i]%*%beta #W12 = W11*Beta
       W[i,-i] <- W[-i,-i]%*%beta #W21 = W11*Beta
       Theta[i,i] <- 1/(W[i,i] - W[-i,i]%*%beta) # 1/(W22-W12*Beta)
