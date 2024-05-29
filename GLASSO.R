@@ -23,15 +23,15 @@ lasso <- function(beta, rho, V,u) {
 GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000) {
   p <- ncol(S)
   W = S + rho*diag(1,p,p)
-  Theta = solve(S,diag(1,p,p))
+  Theta = solve(W,diag(1,p,p))
   stop = FALSE
   for (iter in 1:max_iter) {
-    for (i in 1:p) {
+    for (i in 1:p) {  
       beta <- -Theta[-i,i]/Theta[i,i] #-Theta12/Theta22
       beta <- lasso(beta, rho, W[-i,-i], S[-i,i])
       Theta[i,i] <- 1/(W[i,i] - W[-i,i]%*%beta) # 1/(W22-W12*Beta)
       Theta[-i,i] <- -Theta[i,i]*beta #Theta12 = -Theta22*Beta
-      Theta[-i,i] <- -Theta[i,i]*beta #Theta21 = -Theta22*Beta
+      Theta[i,-i] <- -Theta[i,i]*beta #Theta21 = -Theta22*Beta
       W_lag <- W
       W[-i,i] <- W[-i,-i]%*%beta #W12 = W11*Beta
       W[i,-i] <- W[-i,-i]%*%beta #W21 = W11*Beta
