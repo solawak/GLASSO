@@ -1,3 +1,4 @@
+# Katarzyna Solawa, Małgorzata Kaczkowska, Martyna Czajkowska
 library(MASS)
 library(glasso)
 
