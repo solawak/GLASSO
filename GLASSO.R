@@ -36,7 +36,7 @@ GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
       W[-i,i] <- W[-i,-i]%*%betas[,i] #W12 = W11*Beta
       W[i,-i] <- W[-i,-i]%*%betas[,i] #W21 = W11*Beta
     }
-    if (mean((abs(W-W_lag))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) {
+    if (mean((abs(W-W_lag))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) { # kryterium stopu
       break
     }
   }
@@ -57,7 +57,7 @@ mdl$wi
 # Estymowana macierz kowariancji
 X[2]
 mdl$w
-# Wniosek: otrzymaliśmy wyniki zbliżone do wbudowanej funkcji
+# Wniosek: otrzymaliśmy wyniki zbliżone do funkcji glasso
 
 # Porównanie dla penalize_diag = TRUE
 X <- GLASSO_(S, rho=1.2, penalize_diag = TRUE) 
@@ -68,4 +68,4 @@ mdl$wi
 # Estymowana macierz kowariancji
 X[2]
 mdl$w
-# Wniosek: otrzymaliśmy wyniki zbliżone do wbudowanej funkcji
+# Wniosek: otrzymaliśmy wyniki zbliżone do funkcji glasso
