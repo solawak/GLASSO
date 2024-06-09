@@ -32,13 +32,23 @@ GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
   betas <- matrix(0,p-1,p)
   for (iter in 1:max_iter) {
     # zapisujemy poprzednią wartość W jako w_old
-    W_old <- W
+    #rozwiązujemy lasso
     for (i in 1:p) {
-      #kolejne kroki lasso liczymy na W_old
-      betas[,i] <- lasso(betas[,i], rho, W_old[-i,-i], S[-i,i])
-      W[-i,i] <- W_old[-i,-i]%*%betas[,i] #W12 = W11*Beta
-      W[i,-i] <- W_old[-i,-i]%*%betas[,i] #W21 = W11*Beta
+      betas[,i] <- lasso(betas[,i], rho, W[-i,-i], S[-i,i])
     }
+    W_old <- W
+    #to nie dziala dla male rho
+    for (i in 1:p) {
+      W[-i,i] <- W[-i,-i]%*%betas[,i] #W12 = W11*Beta
+      W[i,-i] <- W[-i,-i]%*%betas[,i] #W21 = W11*Beta
+    }
+    
+    # to dziala dla male rho
+    # for (i in 1:p) {
+    #   W[-i,i] <- W_old[-i,-i]%*%betas[,i] #W12 = W11*Beta
+    #   W[i,-i] <- W_old[-i,-i]%*%betas[,i] #W21 = W11*Beta
+    # }
+    
     if (mean((abs(W-W_old))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) { # kryterium stopu
       break
     }
