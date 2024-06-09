@@ -28,19 +28,22 @@ GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
   p <- ncol(S)
   W = S + rho*diag(1,p,p)*penalize_diag
   Theta = matrix(NA, p,p)
-  betas <- matrix(NA,p-1,p)
+  #inicjujemy beta = 0
+  betas <- matrix(0,p-1,p)
   for (iter in 1:max_iter) {
-    W_lag <- W
-    for (i in 1:p) {  
-      beta <- solve(W[-i,-i])%*%W[-i,i] # W11^-1 * W12
-      betas[,i] <- lasso(beta, rho, W[-i,-i], S[-i,i])
-      W[-i,i] <- W[-i,-i]%*%betas[,i] #W12 = W11*Beta
-      W[i,-i] <- W[-i,-i]%*%betas[,i] #W21 = W11*Beta
+    # zapisujemy poprzednią wartość W jako w_old
+    W_old <- W
+    for (i in 1:p) {
+      #kolejne kroki lasso liczymy na W_old
+      betas[,i] <- lasso(betas[,i], rho, W_old[-i,-i], S[-i,i])
+      W[-i,i] <- W_old[-i,-i]%*%betas[,i] #W12 = W11*Beta
+      W[i,-i] <- W_old[-i,-i]%*%betas[,i] #W21 = W11*Beta
     }
-    if (mean((abs(W-W_lag))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) { # kryterium stopu
+    if (mean((abs(W-W_old))) < t*(sum(abs(S)) - sum(abs(diag(S))))/(p^2 - p)) { # kryterium stopu
       break
     }
   }
+  
   for (i in 1:p) {  
     Theta[i,i] <- 1/(W[i,i] - W[-i,i]%*%betas[,i]) # 1/(W22-W12*Beta)
     Theta[-i,i] <- -Theta[i,i]*betas[,i] #Theta12 = -Theta22*Beta
