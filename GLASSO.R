@@ -15,13 +15,22 @@ z <- mvrnorm(n=n, mu = rep(0,p), Sigma = trueSigma)
 S <- t(z) %*% z/n
 
 # Implementacja LASSO 
-lasso <- function(beta, rho, V,u) {
-  for (j in 1:ncol(V)) {
-    x <- u[j] - V[-j,j]%*%beta[-j]
-    beta[j] <- sign(x)*max(abs(x)-rho,0)/V[j,j]
+lasso <- function(beta, rho, V, u, max_iter=1000) {
+  n <- ncol(V)
+  for (iter in 1:max_iter) {
+    beta_old <- beta
+    for (j in 1:n) {
+      x <- u[j] - V[-j,j] %*% beta[-j]
+      beta[j] <- sign(x) * max(abs(x) - rho, 0) / V[j,j]
+    }
+    # Check for convergence
+    if (sqrt(sum((beta - beta_old)^2)) < 1e-6) {
+      break
+    }
   }
   return(beta)
 }
+
 
 # Implementacja GLASSO, funkcja zwraca macierz odwrotną do macierzy kowariancji i macierz kowariancji
 GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
@@ -37,12 +46,12 @@ GLASSO_ <- function(S, rho=1.2, t=0.001, max_iter=100000,penalize_diag =TRUE) {
       betas[,i] <- lasso(betas[,i], rho, W[-i,-i], S[-i,i])
     }
     W_old <- W
-    #to nie dziala dla male rho
+    # to nie dziala dla male rho
     for (i in 1:p) {
       W[-i,i] <- W[-i,-i]%*%betas[,i] #W12 = W11*Beta
       W[i,-i] <- W[-i,-i]%*%betas[,i] #W21 = W11*Beta
     }
-    
+
     # to dziala dla male rho
     # for (i in 1:p) {
     #   W[-i,i] <- W_old[-i,-i]%*%betas[,i] #W12 = W11*Beta
@@ -74,8 +83,8 @@ mdl$w
 # Wniosek: otrzymaliśmy wyniki zbliżone do funkcji glasso
 
 # Porównanie dla penalize_diag = TRUE
-X <- GLASSO_(S, rho=1.2, penalize_diag = TRUE) 
-mdl <- glasso(S,rho=1.2,approx=FALSE, penalize.diagonal = TRUE) # wbudowana funkcja
+X <- GLASSO_(S, rho=.00002, penalize_diag = TRUE) 
+mdl <- glasso(S,rho=.00002,approx=FALSE, penalize.diagonal = TRUE) # wbudowana funkcja
 # Estymowana macierz odwrotna do macierzy kowariancji 
 X[1]
 mdl$wi
